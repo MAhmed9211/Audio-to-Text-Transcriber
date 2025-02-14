@@ -1,21 +1,15 @@
 import os
 import whisper
 import streamlit as st
-from io import BytesIO
+from tempfile import NamedTemporaryFile
 
-# Set the full path to the ffmpeg executable
-ffmpeg_path = r"C:\Users\Del\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-7.1-full_build\bin\ffmpeg.exe"
-
-# Add the ffmpeg directory to the system path within the Python script
-os.environ["PATH"] += os.pathsep + os.path.dirname(ffmpeg_path)
-
-# Load the Whisper model
-model = whisper.load_model("base")
+# Load the Whisper model (Force CPU mode for better compatibility)
+model = whisper.load_model("base", device="cpu")
 
 # Streamlit UI
 st.title("Multilingual Audio Transcriber with Whisper")
 
-# Add a file uploader for audio files
+# File uploader
 uploaded_file = st.file_uploader("Upload an Audio File", type=["mp3", "wav", "m4a", "flac"])
 
 # Language selection dropdown
@@ -26,20 +20,22 @@ languages = {
 }
 selected_language = st.selectbox("Select Language for Transcription", list(languages.keys()))
 
-# Add a button for transcribing the audio
 if uploaded_file is not None:
-    # Display the audio file on the frontend (so users can play it)
     st.audio(uploaded_file, format="audio/mp3")
 
     if st.button("Transcribe"):
-        # Save the uploaded file properly
-        file_path = "uploaded_audio.mp3"
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getvalue())
+        try:
+            # Save the uploaded file as a temporary file
+            with NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
+                temp_audio.write(uploaded_file.read())
+                temp_audio_path = temp_audio.name  # Get the temp file path
 
-        # Transcribe the saved audio file
-        result = model.transcribe(file_path, language=languages[selected_language])
+            # Transcribe the audio
+            result = model.transcribe(temp_audio_path, language=languages[selected_language])
 
-        # Display the transcribed text
-        st.subheader("Transcribed Text:")
-        st.write(result["text"])
+            # Display the transcribed text
+            st.subheader("Transcribed Text:")
+            st.write(result["text"])
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
