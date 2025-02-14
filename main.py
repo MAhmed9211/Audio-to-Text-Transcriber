@@ -19,7 +19,11 @@ st.title("Multilingual Audio Transcriber with Whisper")
 uploaded_file = st.file_uploader("Upload an Audio File", type=["mp3", "wav", "m4a", "flac"])
 
 # Language selection dropdown
-languages = {"English": "en", "French": "fr", "Spanish": "es", "German": "de", "Chinese": "zh", "Arabic": "ar", "Hindi": "hi", "Urdu": "ur"}
+languages = {
+    "English": "en", "French": "fr", "Spanish": "es",
+    "German": "de", "Chinese": "zh", "Arabic": "ar",
+    "Hindi": "hi", "Urdu": "ur"
+}
 selected_language = st.selectbox("Select Language for Transcription", list(languages.keys()))
 
 # Add a button for transcribing the audio
@@ -28,13 +32,14 @@ if uploaded_file is not None:
     st.audio(uploaded_file, format="audio/mp3")
 
     if st.button("Transcribe"):
-        # Read the uploaded file and save it temporarily
-        audio = uploaded_file.getvalue()
-        audio_file = BytesIO(audio)
-        
-        # Transcribe the audio using Whisper in the selected language
-        result = model.transcribe("audio.mp3", language=languages[selected_language])
-        
+        # Save the uploaded file properly
+        file_path = "uploaded_audio.mp3"
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getvalue())
+
+        # Transcribe the saved audio file
+        result = model.transcribe(file_path, language=languages[selected_language])
+
         # Display the transcribed text
         st.subheader("Transcribed Text:")
         st.write(result["text"])
