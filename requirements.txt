@@ -1,5 +1,5 @@
 torch
 torchaudio
-whisper
-streamlit
 ffmpeg
+openai-whisper
+streamlit
